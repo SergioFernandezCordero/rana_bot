@@ -1,0 +1,5 @@
+certifi
+requests
+urllib3
+schedule
+bing-image-downloader

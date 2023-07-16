@@ -1,0 +1,14 @@
+bin/
+lib/
+lib64/
+lib64
+include/
+share/
+*.pyc
+*.swp
+pip-selfcheck.json
+config.example
+.idea/*
+__pycache__/*
+dataset
+dataset/*
