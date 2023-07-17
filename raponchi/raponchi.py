@@ -2,8 +2,8 @@
 # -*- coding: utf-8 -*-
 #
 """
-Ranabot - Just stupid, fake and absolutely futile information about frogs - by ElAutoestopista
-Ranabot will post a random image of a frog with a silly in an (still) undetermined social network
+Raponchi - Just stupid, fake and absolutely futile information about frogs - by ElAutoestopista
+Raponchi will post a random image of a frog with a silly in an (still) undetermined social network
 based on the schedule you propose.
 """
 
@@ -98,5 +98,5 @@ def frog_generator():
 
 
 if __name__ == '__main__':
-    logger.info("RANABot starting.")
+    logger.info("RAPONCHI starting.")
     frog_scheduler()
