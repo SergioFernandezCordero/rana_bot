@@ -16,6 +16,7 @@ import uuid
 import random
 import urllib.request
 import glob
+import tweepy
 from bing_image_downloader import downloader #using Bing for more cringe
 
 # Environment
@@ -24,6 +25,11 @@ path_to_frogs = os.getenv('PATH_TO_FROGS', default="dataset") # Path where frog 
 frog_number = os.getenv('FROG_NUMBER', default=5) # Number of frog images downloaded in each batch
 frog_scheduler_interval = os.getenv('FROG_SCHEDULER_INTERVAL', default=30) # How frequently the scheduler will look for pending jobs.
 frog_names_url = os.getenv('FROG_NAMES_URL', default="https://raw.githubusercontent.com/olea/lemarios/master/nombres-propios-es.txt") #Online source for frogs
+tw_consumer_key = os.getenv('TW_CONSUMER_KEY')
+tw_consumer_secret = os.getenv('TW_CONSUMER_SECRET')
+tw_access_token = os.getenv('TW_ACCESS_TOKEN')
+tw_access_token_secret = os.getenv('TW_ACCESS_TOKEN_SECRET')
+
 
 # Initialize logging
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
@@ -90,7 +96,26 @@ def frog_creator(frog_images_list, frog_names_list, operation_id):
     return frog_full_name, frog_photo
 
 def frog_poster(frog_full_name, frog_photo):
-    print("WIP")
+    twitter_auth_keys = {
+        "consumer_key"        : tw_consumer_key,
+        "consumer_secret"     : tw_consumer_secret,
+        "access_token"        : tw_access_token,
+        "access_token_secret" : tw_access_token_secret
+    }
+
+    auth = tweepy.OAuthHandler(
+            twitter_auth_keys['consumer_key'],
+            twitter_auth_keys['consumer_secret']
+            )
+
+    auth.set_access_token(
+            twitter_auth_keys['access_token'],
+            twitter_auth_keys['access_token_secret']
+            )
+
+    api = tweepy.API(auth)
+    tweet = "Another day, another #scifi #book and a cup of #coffee"
+    status = api.update_status(status=tweet)
 
 # Auxiliary functions
 
