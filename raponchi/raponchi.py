@@ -20,15 +20,16 @@ import tweepy
 from bing_image_downloader import downloader #using Bing for more cringe
 
 # Environment
-loglevel = os.getenv('LOGLEVEL', default="INFO") # Log level
-path_to_frogs = os.getenv('PATH_TO_FROGS', default="dataset") # Path where frog images will be stored 
+loglevel = os.getenv('LOGLEVEL', default="INFO") # Default log level
+path_to_frogs = os.getenv('PATH_TO_FROGS', default="dataset") # Temporary path where frog images will be stored 
 frog_number = os.getenv('FROG_NUMBER', default=5) # Number of frog images downloaded in each batch
 frog_scheduler_interval = os.getenv('FROG_SCHEDULER_INTERVAL', default=30) # How frequently the scheduler will look for pending jobs.
-frog_names_url = os.getenv('FROG_NAMES_URL', default="https://raw.githubusercontent.com/olea/lemarios/master/nombres-propios-es.txt") #Online source for frogs
-tw_consumer_key = os.getenv('TW_CONSUMER_KEY')
-tw_consumer_secret = os.getenv('TW_CONSUMER_SECRET')
-tw_access_token = os.getenv('TW_ACCESS_TOKEN')
-tw_access_token_secret = os.getenv('TW_ACCESS_TOKEN_SECRET')
+frog_names_url = os.getenv('FROG_NAMES_URL', default="https://raw.githubusercontent.com/olea/lemarios/master/nombres-propios-es.txt") # Online source for frogs
+tw_consumer_key = os.getenv('TW_CONSUMER_KEY') # Twitter Consumer Key
+tw_consumer_secret = os.getenv('TW_CONSUMER_SECRET') # Twitter Consumer Secret
+tw_access_token = os.getenv('TW_ACCESS_TOKEN') # Twitter Access Token
+tw_access_token_secret = os.getenv('TW_ACCESS_TOKEN_SECRET') # Twitter Access Token Secret
+# See tweepy documentation for further information, you lazy
 
 
 # Initialize logging
@@ -44,6 +45,7 @@ def frog_imager(keywords,operation_id):
     # an download it in a temporal, ephemeral directory.
     logger.info(operation_id+" - Time to go for some Frogs images")
     try:
+        print("################### BEGIN BING SEARCH OUTPUT ###################")
         downloader.download(
             keywords, 
             limit=frog_number,
@@ -54,8 +56,9 @@ def frog_imager(keywords,operation_id):
             timeout=5, 
             verbose=False
             )
+        print("################### END BING SEARCH OUTPUT ###################")
     except:
-            logging.exception(operation_id+" - Got exception on main handler")
+            logging.exception(operation_id+" - Got exception recovering images from Bing")
     logger.info(operation_id+" - Creating a list of frog images files.")
     frog_images_list = glob.glob(path_to_frogs+"/"+keywords+"/*", recursive=True)
     return frog_images_list
@@ -95,27 +98,36 @@ def frog_creator(frog_images_list, frog_names_list, operation_id):
     # Return photo and name
     return frog_full_name, frog_photo
 
-def frog_poster(frog_full_name, frog_photo):
-    twitter_auth_keys = {
-        "consumer_key"        : tw_consumer_key,
-        "consumer_secret"     : tw_consumer_secret,
-        "access_token"        : tw_access_token,
-        "access_token_secret" : tw_access_token_secret
-    }
-
-    auth = tweepy.OAuthHandler(
-            twitter_auth_keys['consumer_key'],
-            twitter_auth_keys['consumer_secret']
-            )
-
-    auth.set_access_token(
-            twitter_auth_keys['access_token'],
-            twitter_auth_keys['access_token_secret']
-            )
-
-    api = tweepy.API(auth)
-    tweet = "Another day, another #scifi #book and a cup of #coffee"
-    status = api.update_status(status=tweet)
+def frog_poster(operation_id, frog_full_name, frog_photo):
+    # Frog Poster is the task that connects to Twitter and posts de tweet
+    # using the content generated before.
+    try:
+        # This seems a little messy due to limitations on API endpoint when using a "Free" project.
+        # These limitations forces us to use bot V1 and V2 endpoints.
+    
+        # Using Twitter API v2
+        logger.info(operation_id+" - Authenticating to Twitter")
+        # Auth for V1, for upload media
+        auth = tweepy.OAuth1UserHandler(consumer_key=tw_consumer_key,
+                            consumer_secret=tw_consumer_secret,
+                            access_token=tw_access_token,
+                            access_token_secret=tw_access_token_secret
+                            )
+        # Auth for V2, for posting
+        client = tweepy.Client(consumer_key=tw_consumer_key,
+                            consumer_secret=tw_consumer_secret,
+                            access_token=tw_access_token,
+                            access_token_secret=tw_access_token_secret
+                            )
+        # Upload random selected image
+        api = tweepy.API(auth)
+        logger.info(operation_id+" - Uploading image and posting tweet")
+        media = api.media_upload(filename=frog_photo)
+        logger.info(operation_id+" - Posting tweet")
+        tweet = client.create_tweet(text=frog_full_name, media_ids = [media.media_id_string])
+        print(tweet)
+    except:
+        logging.exception(operation_id+" - Got exception posting to Twitter")
 
 # Auxiliary functions
 
@@ -163,7 +175,7 @@ def frog_generator():
     logger.info(operation_id + " - Standard Frog Generator Job started.")
     frog_cleaner(path_to_frogs,operation_id)
     frog_creator(frog_imager('rana', operation_id), frog_namer(frog_names_url, operation_id), operation_id)
-    frog_poster(frog_full_name, frog_photo)
+    frog_poster(operation_id, frog_full_name, frog_photo)
     frog_cleaner(path_to_frogs,operation_id)
     logger.info(operation_id + " - Standard Frog Generator finished.")
 
