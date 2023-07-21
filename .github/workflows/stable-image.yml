@@ -1,0 +1,34 @@
+name: Build Stable Image
+
+on:
+  release:
+    types:
+      - published
+    branches:
+      - 'release/**'
+    
+jobs:
+
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Release information
+        run: echo "Release ${{ github.event.release.tag_name }} will be generated"
+
+      - name: Build qemu dependencies for cross-platform build
+        run: sudo apt-get update && sudo apt-get install qemu-user-static
+
+      - name: Login into Dockerhub
+        env:
+          DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
+        run: docker login --username elautoestopista --password $DOCKERHUB_TOKEN
+    
+      - name: Prepare cross-platform build
+        run: docker buildx create --name raponchi --platform linux/amd64,linux/arm64,linux/arm/v7
+
+      - uses: actions/checkout@v3    
+      - name: Build raponchi project
+        run: docker buildx use raponchi &&
+            docker buildx inspect --bootstrap &&
+            docker buildx build --platform linux/amd64,linux/arm64,linux/arm/v7 -t elautoestopista/raponchi:${{ github.event.release.tag_name }} -t elautoestopista/raponchi:latest --push .
