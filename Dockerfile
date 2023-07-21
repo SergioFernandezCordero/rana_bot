@@ -10,7 +10,7 @@ RUN apk update && \
     rm /bin/sh && \
     ln -s /bin/bash /bin/sh && \
     mkdir -p /opt/raponchi && \
-    addgroup aenea --gid 1001 && \
+    addgroup raponchi --gid 1001 && \
     adduser -g raponchi -G raponchi -h /opt/raponchi -D raponchi -u 1001 && \
     mkdir -p /opt/raponchi/
 # Deploy
