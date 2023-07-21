@@ -163,8 +163,9 @@ def frog_scheduler():
     while True:
         scheduled_jobs = schedule.idle_seconds()
         logger.info("SCHEDULER - Next job set to run on "+ str(round(scheduled_jobs)) + " seconds.")
+        #schedule.run_pending()
         schedule.run_pending()
-        time.sleep(frog_scheduler_interval)
+        time.sleep(int(frog_scheduler_interval))
 
 
 def frog_generator():
