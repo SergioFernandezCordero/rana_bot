@@ -29,8 +29,6 @@ tw_consumer_key = os.getenv('TW_CONSUMER_KEY') # Twitter Consumer Key
 tw_consumer_secret = os.getenv('TW_CONSUMER_SECRET') # Twitter Consumer Secret
 tw_access_token = os.getenv('TW_ACCESS_TOKEN') # Twitter Access Token
 tw_access_token_secret = os.getenv('TW_ACCESS_TOKEN_SECRET') # Twitter Access Token Secret
-# See tweepy documentation for further information, you lazy
-
 
 # Initialize logging
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
@@ -153,7 +151,6 @@ def frog_scheduler():
     try:
         # Tell the frog when to appear!
         schedule.every().day.at("08:00").do(frog_generator)
-        schedule.every(2).minutes.do(frog_generator)
         all_jobs = schedule.get_jobs()
         logger.info("SCHEDULER - The current Frogs Schedulers have been correctly intialized:")
         for i in all_jobs:
@@ -166,7 +163,7 @@ def frog_scheduler():
     while True:
         scheduled_jobs = schedule.idle_seconds()
         logger.info("SCHEDULER - Next job set to run on "+ str(round(scheduled_jobs)) + " seconds.")
-        schedule.run_all(delay_seconds=10)
+        schedule.run_pending()
         time.sleep(frog_scheduler_interval)
 
 
