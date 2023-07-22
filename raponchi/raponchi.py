@@ -17,9 +17,11 @@ import random
 import urllib.request
 import glob
 import tweepy
+from tzlocal import get_localzone
 from bing_image_downloader import downloader #using Bing for more cringe
 
 # Environment
+timezone = os.getenv('TIMEZONE', default=get_localzone()) # Timezone
 loglevel = os.getenv('LOGLEVEL', default="INFO") # Default log level
 path_to_frogs = os.getenv('PATH_TO_FROGS', default="dataset") # Temporary path where frog images will be stored 
 frog_number = os.getenv('FROG_NUMBER', default=5) # Number of frog images downloaded in each batch
@@ -179,5 +181,6 @@ def frog_generator():
 
 
 if __name__ == '__main__':
-    logger.info("RAPONCHI starting.")
+    os.environ['TZ'] = str(timezone)
+    logger.info("RAPONCHI starting on timezone " + str(timezone) + ". Please note all dates in logs will appear in this timezone.")
     frog_scheduler()

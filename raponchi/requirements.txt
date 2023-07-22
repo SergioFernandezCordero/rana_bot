@@ -4,3 +4,5 @@ urllib3
 schedule
 bing-image-downloader
 tweepy
+tz
+tzlocal
