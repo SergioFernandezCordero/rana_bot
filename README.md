@@ -5,6 +5,7 @@ Just stupid, fake and absolutely futile information about frogs
 
 ### Setup the following environment variables:
 
+- TIMEZONE: Timezone. Defaults to system timezone
 - LOGLEVEL: Log level. Defaults to INFO
 - PATH_TO_FROGS: Temporary path where frog images will be stored. Defaults to "dataset"
 - FROG_NUMBER: Number of frog images downloaded in each batch. Defaults to 5
