@@ -46,6 +46,13 @@ def frog_imager(keywords,operation_id):
     # an download it in a temporal, ephemeral directory.
     logger.info(operation_id+" - Time to go for some Frogs images")
     try:
+        # Force creation of destination path
+        try:
+            path = os.path.join(path_to_frogs, keywords)
+            logger.info(operation_id+" - Creating destination path " + path)
+            os.mkdir(path, 0o755)
+        except:
+            logging.exception(operation_id+" - Got exception creation destination path " + path)
         print("################### BEGIN BING SEARCH OUTPUT ###################")
         downloader.download(
             keywords, 
