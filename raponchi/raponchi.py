@@ -135,12 +135,17 @@ def frog_poster(operation_id, frog_full_name, frog_photo):
 def frog_cleaner(path_to_frogs,operation_id):
     # Frog Cleaner is an auxiliary function which cleanups the images downloaded by Frog Imager
     # I do this because I'm to lazy to patch others code, specially when it looks abandoned.
-    logger.info(operation_id+" - Will try cleanup path_to_frogs folder and its content")
+    logger.info(operation_id+" - Will try cleanup path_to_frogs folder contents")
     logger.info(operation_id+" - Cleanup "+path_to_frogs)
     if os.path.exists(path_to_frogs) and os.path.isdir(path_to_frogs):
         try:
-            shutil.rmtree(path_to_frogs+"/")
-            logger.info(operation_id+" - Directory "+path_to_frogs+ " is deleted")
+            for files in os.listdir(path_to_frogs):
+                path = os.path.join(path_to_frogs, files)
+                try:
+                    shutil.rmtree(path)
+                except OSError:
+                    os.remove(path)
+            logger.info(operation_id+" - Directory "+path_to_frogs+ " content is deleted")
         except OSError as x:
             logger.error(operation_id+" - Error occured: %s : %s" % (path_to_frogs, x.strerror))
     else:
