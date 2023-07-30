@@ -26,6 +26,7 @@ loglevel = os.getenv('LOGLEVEL', default="INFO") # Default log level
 path_to_frogs = os.getenv('PATH_TO_FROGS', default="dataset") # Temporary path where frog images will be stored 
 frog_number = os.getenv('FROG_NUMBER', default=5) # Number of frog images downloaded in each batch
 frog_scheduler_interval = os.getenv('FROG_SCHEDULER_INTERVAL', default=30) # How frequently the scheduler will look for pending jobs.
+frog_scheduler_run_now = os.getenv('FROG_SCHEDULER_RUN_NOW', default="False") # Run all jobs inmediatly at startup. Useful for development.
 frog_names_url = os.getenv('FROG_NAMES_URL', default="https://raw.githubusercontent.com/olea/lemarios/master/nombres-propios-es.txt") # Online source for frogs
 tw_consumer_key = os.getenv('TW_CONSUMER_KEY') # Twitter Consumer Key
 tw_consumer_secret = os.getenv('TW_CONSUMER_SECRET') # Twitter Consumer Secret
@@ -138,7 +139,7 @@ def frog_cleaner(path_to_frogs,operation_id):
     logger.info(operation_id+" - Cleanup "+path_to_frogs)
     if os.path.exists(path_to_frogs) and os.path.isdir(path_to_frogs):
         try:
-            shutil.rmtree(path_to_frogs)
+            shutil.rmtree(path_to_frogs+"/")
             logger.info(operation_id+" - Directory "+path_to_frogs+ " is deleted")
         except OSError as x:
             logger.error(operation_id+" - Error occured: %s : %s" % (path_to_frogs, x.strerror))
@@ -162,10 +163,13 @@ def frog_scheduler():
         schedule.clear()
         exit(1)
 
+    if frog_scheduler_run_now == "True":
+        logger.warning("SCHEDULER - FROG_SCHEDULER_RUN_NOW set to True. Will attempt to run all scheduled jobs NOW.")
+        schedule.run_all(delay_seconds=5)
+
     while True:
         scheduled_jobs = schedule.idle_seconds()
         logger.info("SCHEDULER - Next job set to run on "+ str(round(scheduled_jobs)) + " seconds.")
-        #schedule.run_pending()
         schedule.run_pending()
         time.sleep(int(frog_scheduler_interval))
 
