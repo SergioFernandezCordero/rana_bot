@@ -24,7 +24,7 @@ from bing_image_downloader import downloader #using Bing for more cringe
 timezone = os.getenv('TIMEZONE', default=get_localzone()) # Timezone
 loglevel = os.getenv('LOGLEVEL', default="INFO") # Default log level
 path_to_frogs = os.getenv('PATH_TO_FROGS', default="dataset") # Temporary path where frog images will be stored 
-frog_number = os.getenv('FROG_NUMBER', default=5) # Number of frog images downloaded in each batch
+frog_number = os.getenv('FROG_NUMBER', default="5") # Number of frog images downloaded in each batch
 frog_scheduler_interval = os.getenv('FROG_SCHEDULER_INTERVAL', default=30) # How frequently the scheduler will look for pending jobs.
 frog_scheduler_run_now = os.getenv('FROG_SCHEDULER_RUN_NOW', default="False") # Run all jobs inmediatly at startup. Useful for development.
 frog_names_url = os.getenv('FROG_NAMES_URL', default="https://raw.githubusercontent.com/olea/lemarios/master/nombres-propios-es.txt") # Online source for frogs
@@ -56,7 +56,7 @@ def frog_imager(keywords,operation_id):
         print("################### BEGIN BING SEARCH OUTPUT ###################")
         downloader.download(
             keywords, 
-            limit=frog_number,
+            limit=int(frog_number),
             filter='photo',
             output_dir=path_to_frogs, 
             adult_filter_off=False, 
