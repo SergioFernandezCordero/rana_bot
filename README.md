@@ -11,6 +11,7 @@ Just stupid, fake and absolutely futile information about frogs
 - FROG_NUMBER: Number of frog images downloaded in each batch. Defaults to 5
 - FROG_SCHEDULER_INTERVAL: How frequently the scheduler will poll for pending jobs. Defaults to 30 seconds
 - FROG_NAMES_URL: Online source for frog names. Should be a URL to a plain text file with names, one per line.
+- FROG_SCHEDULER_RUN_NOW: Run all scheduled jobs at startup without waiting to its schedule. Useful for development
 - TW_CONSUMER_KEY: Twitter Consumer Key
 - TW_CONSUMER_SECRET: Twitter Consumer Secret
 - TW_ACCESS_TOKEN: Twitter Access Token
