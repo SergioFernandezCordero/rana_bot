@@ -185,7 +185,7 @@ def frog_scheduler():
 
 def frog_generator():
     operation_id = "uuid: %s" % str(uuid.uuid4())
-    logger.info("%s - Standard Frog Generator Job started." % operation_id)
+    logger.info("%s - Standard Frog Generator Job started for keyword: %s" % (operation_id, frogword))
     frog_cleaner(path_to_frogs, operation_id)
     frog_creator(frog_imager(frogword, operation_id), frog_namer(frog_names_url, operation_id), operation_id)
     frog_poster(operation_id, frog_full_name, frog_photo)
