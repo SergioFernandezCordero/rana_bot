@@ -12,11 +12,18 @@ RUN apk update && \
     mkdir -p /opt/raponchi && \
     addgroup raponchi --gid 1001 && \
     adduser -g raponchi -G raponchi -h /opt/raponchi -D raponchi -u 1001 && \
-    mkdir -p /opt/raponchi/
+    mkdir -p /opt/raponchi/ && \
+    mkdir -p /opt/raponchi/venv/
+
 # Deploy
 ADD raponchi/* /opt/raponchi/
+ADD raponchi/scripts/run_raponchi.sh /opt/raponchi/
 RUN chown -R raponchi:raponchi /opt/raponchi && \
+    chmod +x /opt/raponchi/run_raponchi.sh && \
+    # Using a virtualenv like nice people do
+    python3 -m venv /opt/raponchi/venv && \
+    . /opt/raponchi/venv/bin/activate && \
     pip3 install -r /opt/raponchi/requirements.txt
 # Run
 USER raponchi
-CMD python3 /opt/raponchi/raponchi.py
+ENTRYPOINT ["/opt/raponchi/run_raponchi.sh"]
