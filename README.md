@@ -16,6 +16,9 @@ Just stupid, fake and absolutely futile information about frogs
 - TW_CONSUMER_SECRET: Twitter Consumer Secret
 - TW_ACCESS_TOKEN: Twitter Access Token
 - TW_ACCESS_TOKEN_SECRET: Twitter Access Token Secret
+- ELK_URL: URL of ElasticSearch cluster used to send logs. TLS assumed. If ELK_URL and ELK_PORT are defined, ELK logger will be configured.
+- ELK_PORT: Port of the ElasticSearch cluster used to send logs. If ELK_URL and ELK_PORT are defined, ELK logger will be configured.
+- ELK_INDEX: Name of the index used to store logs. Defaults to raponchi-log
 
 ### Install dependencies:
 

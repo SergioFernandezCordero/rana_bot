@@ -6,3 +6,5 @@ bing-image-downloader
 tweepy
 tz
 tzlocal
+CMRESHandler
+elasticsearch==7.17.9

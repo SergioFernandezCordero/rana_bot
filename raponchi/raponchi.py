@@ -17,12 +17,18 @@ import random
 import urllib.request
 import glob
 import tweepy
+import elasticsearch
+
 from tzlocal import get_localzone
 from bing_image_downloader import downloader  # using Bing for more cringe
+from cmreslogging.handlers import CMRESHandler
+
 
 # Environment
 timezone = os.getenv('TIMEZONE', default=get_localzone())  # Timezone
 loglevel = os.getenv('LOGLEVEL', default="INFO")  # Default log level
+
+# Frog generation parameters
 frogword = os.getenv('FROGWORD', default='rana')  # Keyword to search, defaults to "rana"
 path_to_frogs = os.getenv('PATH_TO_FROGS', default="dataset")  # Temporary path where frog images will be stored
 frog_number = os.getenv('FROG_NUMBER', default=5)  # Number of frog images downloaded in each batch
@@ -31,18 +37,39 @@ frog_names_url = os.getenv(
     'FROG_NAMES_URL',
     default="https://raw.githubusercontent.com/olea/lemarios/master/nombres-propios-es.txt"
     )  # Online source for frogs names
+
+# Twitter publication parameters
 tw_consumer_key = os.getenv('TW_CONSUMER_KEY')  # Twitter Consumer Key
 tw_consumer_secret = os.getenv('TW_CONSUMER_SECRET')  # Twitter Consumer Secret
 tw_access_token = os.getenv('TW_ACCESS_TOKEN')  # Twitter Access Token
 tw_access_token_secret = os.getenv('TW_ACCESS_TOKEN_SECRET')  # Twitter Access Token Secret
 
+# ElasticSearch logging parameters
+# Assumes TLS is enabled and credentials needed, but can disable TLS verification for development purposes.
+elk_url = os.getenv('ELK_URL')  # ELK URL for logging
+elk_port = os.getenv('ELK_PORT')  # ELK Port
+elk_user = os.getenv('ELK_USER')  # ELK User
+elk_pass = os.getenv('ELK_PASS')  # ELK Password
+elk_tls_verify = os.getenv('ELK_TLS_VERIFY', default=True)  # Allows disabling TLS verification for ELK. Default to True
+elk_index = os.getenv('ELK_INDEX', default="raponchi-log")  # ELK Index where logs will be logged
+
+
 # Initialize logging
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
                     level=loglevel)
 logger = logging.getLogger(__name__)
-
+# Enable ELK logging if configured
+if elk_url and elk_port:
+    elk_handler = CMRESHandler(hosts=[{'host': elk_url, 'port': elk_port}],
+                               auth_type=(CMRESHandler.AuthType.BASIC_AUTH, (elk_user, elk_pass)),
+                               index_name_frequency=CMRESHandler.IndexNameFrequency.WEEKLY,
+                               use_ssl=True,
+                               verify_ssl=elk_tls_verify,
+                               es_index_name=elk_index)
+    logger.addHandler(elk_handler)
 
 # Components functions
+
 
 def frog_imager(keywords, operation_id):
     # Frog Imager scrapes Bing in search of a list of frog images, 
