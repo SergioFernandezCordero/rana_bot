@@ -54,19 +54,19 @@ elk_tls_verify = os.getenv('ELK_TLS_VERIFY', default=True)  # Allows disabling T
 elk_index = os.getenv('ELK_INDEX', default="raponchi-log")  # ELK Index where logs will be logged
 
 
-# Initialize logging
+# Initialize logging -> THIS CONNECTS BUT DOESN'T SEND LOGS
+elasticsearch = CMRESHandler(hosts=[{'host': 'opensearch-cluster-master.monitoring.svc.cluster.local', 'port': elk_port}],
+                             auth_type=CMRESHandler.AuthType.BASIC_AUTH,
+                             auth_details=(elk_user, elk_pass),
+                             index_name_frequency=CMRESHandler.IndexNameFrequency.WEEKLY,
+                             use_ssl=True,
+                             verify_ssl=False,
+                             es_index_name=elk_index)
+logger = logging.getLogger(__name__)
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
                     level=loglevel)
-logger = logging.getLogger(__name__)
-# Enable ELK logging if configured
-if elk_url and elk_port:
-    elk_handler = CMRESHandler(hosts=[{'host': elk_url, 'port': elk_port}],
-                               auth_type=(CMRESHandler.AuthType.BASIC_AUTH, (elk_user, elk_pass)),
-                               index_name_frequency=CMRESHandler.IndexNameFrequency.WEEKLY,
-                               use_ssl=True,
-                               verify_ssl=elk_tls_verify,
-                               es_index_name=elk_index)
-    logger.addHandler(elk_handler)
+logger.addHandler(elasticsearch)
+logger.info("This should go to ELK")
 
 # Components functions
 
