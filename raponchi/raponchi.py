@@ -51,6 +51,7 @@ elk_url = os.getenv('ELK_URL')  # ELK URL for logging
 elk_port = os.getenv('ELK_PORT')  # ELK Port
 elk_user = os.getenv('ELK_USER')  # ELK User
 elk_pass = os.getenv('ELK_PASS')  # ELK Password
+elk_flush_freq = os.getenv('ELK_FLUSH_FREW', default=2)  # Interval between flushes. Defaults to 2 seconds.
 elk_tls_verify = os.getenv('ELK_TLS_VERIFY', default="True")  # Allows disabling TLS verification for ELK. Default to True
 elk_index = os.getenv('ELK_INDEX', default="raponchi-log")  # ELK Index where logs will be logged
 
@@ -63,16 +64,18 @@ elasticHandler = CMRESHandler(hosts=[{'host': elk_url, 'port': elk_port}],
                               index_name_frequency=CMRESHandler.IndexNameFrequency.WEEKLY,
                               use_ssl=True,
                               verify_ssl=eval(elk_tls_verify),
-                              flush_frequency_in_sec=2,
-                              es_doc_type='log',
-                              es_index_name='raponchi-weekly-')
+                              flush_frequency_in_sec=elk_flush_freq,
+                              es_doc_type='python_log',
+                              es_index_name=elk_index)
 logger = logging.getLogger(__name__)
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
                     level=loglevel)
 logger.addHandler(elasticHandler)
 logger.info("Loglevel is %s", loglevel)
+print(eval(elk_tls_verify))
 if eval(elk_tls_verify) is False:
     logger.warning("TLS Verification disabled. Please note this is insecure.")
+    logger.info("TLS Verification disabled. Please note this is insecure.")
 
 # Components functions
 
