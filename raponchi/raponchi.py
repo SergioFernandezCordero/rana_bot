@@ -17,7 +17,8 @@ import random
 import urllib.request
 import glob
 import tweepy
-import elasticsearch
+import urllib3
+
 
 from tzlocal import get_localzone
 from bing_image_downloader import downloader  # using Bing for more cringe
@@ -53,20 +54,25 @@ elk_pass = os.getenv('ELK_PASS')  # ELK Password
 elk_tls_verify = os.getenv('ELK_TLS_VERIFY', default=True)  # Allows disabling TLS verification for ELK. Default to True
 elk_index = os.getenv('ELK_INDEX', default="raponchi-log")  # ELK Index where logs will be logged
 
-
+# Disable TLS exceptions, will warn manually later
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 # Initialize logging -> THIS CONNECTS BUT DOESN'T SEND LOGS
-elasticsearch = CMRESHandler(hosts=[{'host': 'opensearch-cluster-master.monitoring.svc.cluster.local', 'port': elk_port}],
-                             auth_type=CMRESHandler.AuthType.BASIC_AUTH,
-                             auth_details=(elk_user, elk_pass),
-                             index_name_frequency=CMRESHandler.IndexNameFrequency.WEEKLY,
-                             use_ssl=True,
-                             verify_ssl=False,
-                             es_index_name=elk_index)
+elasticHandler = CMRESHandler(hosts=[{'host': 'opensearch-cluster-master.monitoring.svc.cluster.local', 'port': 9200}],
+                              auth_type=CMRESHandler.AuthType.BASIC_AUTH,
+                              auth_details=('admin', 'Madam_2387'),
+                              index_name_frequency=CMRESHandler.IndexNameFrequency.WEEKLY,
+                              use_ssl=True,
+                              verify_ssl=False,
+                              es_doc_type='log',
+                              es_index_name='raponchi-weekly-')
 logger = logging.getLogger(__name__)
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
                     level=loglevel)
-logger.addHandler(elasticsearch)
+logger.addHandler(elasticHandler)
 logger.info("This should go to ELK")
+if not elk_tls_verify:
+    logger.warning("TLS Verification disabled. Please note this is insecure.")
+
 
 # Components functions
 

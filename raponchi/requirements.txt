@@ -1,3 +1,4 @@
+logger
 certifi
 requests
 urllib3
