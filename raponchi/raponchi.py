@@ -70,7 +70,7 @@ logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s
                     level=loglevel)
 logger.addHandler(elasticHandler)
 logger.info("This should go to ELK")
-if not elk_tls_verify:
+if eval(elk_tls_verify) is False:
     logger.warning("TLS Verification disabled. Please note this is insecure.")
 
 
