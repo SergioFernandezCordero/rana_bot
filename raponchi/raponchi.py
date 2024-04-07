@@ -59,7 +59,7 @@ urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 # Initialize logging -> THIS CONNECTS BUT DOESN'T SEND LOGS
 elasticHandler = CMRESHandler(hosts=[{'host': elk_url, 'port': elk_port}],
                               auth_type=CMRESHandler.AuthType.BASIC_AUTH,
-                              auth_details=("fernando", "papapapa"),
+                              auth_details=(elk_user, elk_pass),
                               index_name_frequency=CMRESHandler.IndexNameFrequency.WEEKLY,
                               use_ssl=True,
                               verify_ssl=eval(elk_tls_verify),
