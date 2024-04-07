@@ -59,7 +59,6 @@ elk_index = os.getenv('ELK_INDEX', default="raponchi-log")  # ELK Index where lo
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 ### Initialize logging -> THIS CONNECTS BUT DOESN'T SEND LOGS
-logging.basicConfig()
 logger = logging.getLogger('raponchi')
 ## Create formatter and add it to the handlers
 formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
@@ -82,9 +81,8 @@ elasticHandler = CMRESHandler(hosts=[{'host': elk_url, 'port': elk_port}],
 logger.setLevel(loglevel)
 logger.addHandler(elasticHandler)
 logger.info("Loglevel is %s", loglevel)
-if eval(elk_tls_verify) is False:
-    logger.warning("TLS Verification disabled. Please note this is insecure.")
-    logger.info("TLS Verification disabled. Please note this is insecure.")
+if elk_url and elk_port and eval(elk_tls_verify) is False:
+    logger.warning("ElasticSearch TLS Verification disabled. Please note this is insecure.")
 
 # Components functions
 
