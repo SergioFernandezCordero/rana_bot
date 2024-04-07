@@ -63,6 +63,7 @@ elasticHandler = CMRESHandler(hosts=[{'host': elk_url, 'port': elk_port}],
                               index_name_frequency=CMRESHandler.IndexNameFrequency.WEEKLY,
                               use_ssl=True,
                               verify_ssl=eval(elk_tls_verify),
+                              flush_frequency_in_sec=2,
                               es_doc_type='log',
                               es_index_name='raponchi-weekly-')
 logger = logging.getLogger(__name__)
