@@ -19,11 +19,9 @@ import glob
 import tweepy
 import urllib3
 
-
 from tzlocal import get_localzone
 from bing_image_downloader import downloader  # using Bing for more cringe
-from cmreslogging.handlers import CMRESHandler
-
+from python_elastic_logstash import ElasticHandler, ElasticFormatter
 
 # Environment
 timezone = os.getenv('TIMEZONE', default=get_localzone())  # Timezone
@@ -57,20 +55,22 @@ elk_index = os.getenv('ELK_INDEX', default="raponchi-log")  # ELK Index where lo
 
 # Disable TLS exceptions, will warn manually later
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
-# Initialize logging -> THIS CONNECTS BUT DOESN'T SEND LOGS
-formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-elasticHandler = CMRESHandler(hosts=[{'host': elk_url, 'port': elk_port}],
-                              auth_type=CMRESHandler.AuthType.BASIC_AUTH,
-                              auth_details=(elk_user, elk_pass),
-                              index_name_frequency=CMRESHandler.IndexNameFrequency.WEEKLY,
-                              use_ssl=True,
-                              verify_ssl=eval(elk_tls_verify),
-                              flush_frequency_in_sec=elk_flush_freq,
-                              es_doc_type='python_log',
-                              es_index_name=elk_index)
-elasticHandler.setFormatter(formatter)
-logger = logging.getLogger('raponchi')
+
+# Initialize logging
+elasticsearch_endpoint = ("https://%s:%s@%s:%s" % (elk_user, elk_pass, elk_url, elk_port))
+logger = logging.getLogger(elk_index)
 logger.setLevel(logging.DEBUG)
+elasticHandler = ElasticHandler(elasticsearch_endpoint)
+#                              (hosts=[{'host': elk_url, 'port': elk_port}],
+#                              auth_type=CMRESHandler.AuthType.BASIC_AUTH,
+#                              auth_details=(elk_user, elk_pass),
+#                              index_name_frequency=CMRESHandler.IndexNameFrequency.WEEKLY,
+#                              use_ssl=True,
+#                              verify_ssl=eval(elk_tls_verify),
+#                              flush_frequency_in_sec=elk_flush_freq,
+#                              es_doc_type='python_log',
+#                              es_index_name=elk_index))
+elasticHandler.setFormatter(ElasticFormatter())
 logger.addHandler(elasticHandler)
 logger.info("Loglevel is %s", loglevel)
 if eval(elk_tls_verify) is False:

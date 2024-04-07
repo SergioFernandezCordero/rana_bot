@@ -7,5 +7,5 @@ bing-image-downloader
 tweepy
 tz
 tzlocal
-CMRESHandler
+python-elastic-logstash
 elasticsearch==7.17.9
