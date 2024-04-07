@@ -51,18 +51,18 @@ elk_url = os.getenv('ELK_URL')  # ELK URL for logging
 elk_port = os.getenv('ELK_PORT')  # ELK Port
 elk_user = os.getenv('ELK_USER')  # ELK User
 elk_pass = os.getenv('ELK_PASS')  # ELK Password
-elk_tls_verify = os.getenv('ELK_TLS_VERIFY', default=True)  # Allows disabling TLS verification for ELK. Default to True
+elk_tls_verify = os.getenv('ELK_TLS_VERIFY', default="True")  # Allows disabling TLS verification for ELK. Default to True
 elk_index = os.getenv('ELK_INDEX', default="raponchi-log")  # ELK Index where logs will be logged
 
 # Disable TLS exceptions, will warn manually later
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 # Initialize logging -> THIS CONNECTS BUT DOESN'T SEND LOGS
-elasticHandler = CMRESHandler(hosts=[{'host': 'opensearch-cluster-master.monitoring.svc.cluster.local', 'port': 9200}],
+elasticHandler = CMRESHandler(hosts=[{'host': elk_url, 'port': elk_port}],
                               auth_type=CMRESHandler.AuthType.BASIC_AUTH,
-                              auth_details=('admin', 'Madam_2387'),
+                              auth_details=(elk_user, elk_pass),
                               index_name_frequency=CMRESHandler.IndexNameFrequency.WEEKLY,
                               use_ssl=True,
-                              verify_ssl=False,
+                              verify_ssl=eval(elk_tls_verify),
                               es_doc_type='log',
                               es_index_name='raponchi-weekly-')
 logger = logging.getLogger(__name__)
