@@ -18,12 +18,10 @@ import urllib.request
 import glob
 import tweepy
 import urllib3
-
+from opensearch_logger import OpenSearchHandler
 
 from tzlocal import get_localzone
 from bing_image_downloader import downloader  # using Bing for more cringe
-from cmreslogging.handlers import CMRESHandler
-
 
 # Environment
 timezone = os.getenv('TIMEZONE', default=get_localzone())  # Timezone
@@ -51,7 +49,7 @@ elk_url = os.getenv('ELK_URL')  # ELK URL for logging
 elk_port = os.getenv('ELK_PORT')  # ELK Port
 elk_user = os.getenv('ELK_USER')  # ELK User
 elk_pass = os.getenv('ELK_PASS')  # ELK Password
-elk_flush_freq = os.getenv('ELK_FLUSH_FREW', default=2)  # Interval between flushes. Defaults to 2 seconds.
+elk_flush_freq = os.getenv('ELK_FLUSH_FREQ', default=2)  # Interval between flushes. Defaults to 2 seconds.
 elk_tls_verify = os.getenv('ELK_TLS_VERIFY', default="True")  # Allows disabling TLS verification for ELK. Default to True
 elk_index = os.getenv('ELK_INDEX', default="raponchi-log")  # ELK Index where logs will be logged
 
@@ -68,20 +66,23 @@ consoleHandler = logging.StreamHandler()
 consoleHandler.setLevel(loglevel)
 logger.addHandler(consoleHandler)
 consoleHandler.setFormatter(formatter)
+# Add ElasticSearch Handler if variables defined
 if elk_url and elk_port:
-    # Add ElasticSearch Handler
-    elasticHandler = CMRESHandler(hosts=[{'host': elk_url, 'port': elk_port}],
-                                  auth_type=CMRESHandler.AuthType.BASIC_AUTH,
-                                  auth_details=(elk_user, elk_pass),
-                                  index_name_frequency=CMRESHandler.IndexNameFrequency.WEEKLY,
-                                  use_ssl=True,
-                                  verify_ssl=eval(elk_tls_verify),
-                                  flush_frequency_in_sec=elk_flush_freq,
-                                  es_doc_type='python_log',
-                                  es_index_name=elk_index)
+    elk_host = "%s:%s" % (elk_url, elk_port)
+    elasticHandler = OpenSearchHandler(
+        index_name=elk_index,
+        hosts=[elk_host],
+        http_auth=(elk_user, elk_pass),
+        http_compress=True,
+        index_rotate="WEEKLY",
+        use_ssl=True,
+        verify_certs=eval(elk_tls_verify),
+        ssl_assert_hostname=eval(elk_tls_verify),
+        ssl_show_warn=False
+    )
     logger.setLevel(loglevel)
     logger.addHandler(elasticHandler)
-    logger.info("Logging to ElasticSearch enabled - URL: %s:%s, User: %s" % (elk_url, elk_port, elk_user))
+    logger.info("Logging to ElasticSearch enabled - URL: %s, User: %s" % (elk_host, elk_user))
     if eval(elk_tls_verify) is False:
         logger.warning("ElasticSearch TLS Verification disabled. Please note this is insecure.")
 logger.info("Loglevel is %s", loglevel)
