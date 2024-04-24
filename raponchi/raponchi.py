@@ -87,6 +87,8 @@ if elk_url and elk_port:
     logger.info("Logging to ElasticSearch enabled - URL: %s, User: %s" % (elk_host, elk_user))
     if eval(elk_tls_verify) is False:
         logger.warning("ElasticSearch TLS Verification disabled. Please note this is insecure.")
+
+# Inform loglevel in all handlers
 logger.info("Loglevel is %s", loglevel)
 
 
