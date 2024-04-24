@@ -58,14 +58,16 @@ urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 # ## Initialize logging -> THIS CONNECTS BUT DOESN'T SEND LOGS
 logger = logging.getLogger('raponchi')
-# # Create formatter and add it to the handlers
-formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+logger.setLevel(loglevel)
+
 # # Create Handlers
+# Create formatter for console handler
+formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 # Add Console Handler
 consoleHandler = logging.StreamHandler()
-consoleHandler.setLevel(loglevel)
 logger.addHandler(consoleHandler)
 consoleHandler.setFormatter(formatter)
+consoleHandler.setLevel(loglevel)
 # Add ElasticSearch Handler if variables defined
 if elk_url and elk_port:
     elk_host = "%s:%s" % (elk_url, elk_port)
@@ -80,8 +82,8 @@ if elk_url and elk_port:
         ssl_assert_hostname=eval(elk_tls_verify),
         ssl_show_warn=False
     )
-    logger.setLevel(loglevel)
     logger.addHandler(elasticHandler)
+    elasticHandler.setLevel(loglevel)
     logger.info("Logging to ElasticSearch enabled - URL: %s, User: %s" % (elk_host, elk_user))
     if eval(elk_tls_verify) is False:
         logger.warning("ElasticSearch TLS Verification disabled. Please note this is insecure.")
