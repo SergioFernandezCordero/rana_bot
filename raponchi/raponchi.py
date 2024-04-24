@@ -17,12 +17,17 @@ import random
 import urllib.request
 import glob
 import tweepy
+import urllib3
+from opensearch_logger import OpenSearchHandler
+
 from tzlocal import get_localzone
 from bing_image_downloader import downloader  # using Bing for more cringe
 
 # Environment
 timezone = os.getenv('TIMEZONE', default=get_localzone())  # Timezone
 loglevel = os.getenv('LOGLEVEL', default="INFO")  # Default log level
+
+# Frog generation parameters
 frogword = os.getenv('FROGWORD', default='rana')  # Keyword to search, defaults to "rana"
 path_to_frogs = os.getenv('PATH_TO_FROGS', default="dataset")  # Temporary path where frog images will be stored
 frog_number = os.getenv('FROG_NUMBER', default=5)  # Number of frog images downloaded in each batch
@@ -31,18 +36,64 @@ frog_names_url = os.getenv(
     'FROG_NAMES_URL',
     default="https://raw.githubusercontent.com/olea/lemarios/master/nombres-propios-es.txt"
     )  # Online source for frogs names
+
+# Twitter publication parameters
 tw_consumer_key = os.getenv('TW_CONSUMER_KEY')  # Twitter Consumer Key
 tw_consumer_secret = os.getenv('TW_CONSUMER_SECRET')  # Twitter Consumer Secret
 tw_access_token = os.getenv('TW_ACCESS_TOKEN')  # Twitter Access Token
 tw_access_token_secret = os.getenv('TW_ACCESS_TOKEN_SECRET')  # Twitter Access Token Secret
 
-# Initialize logging
-logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-                    level=loglevel)
-logger = logging.getLogger(__name__)
+# ElasticSearch logging parameters
+# Assumes TLS is enabled and credentials needed, but can disable TLS verification for development purposes.
+elk_url = os.getenv('ELK_URL')  # ELK URL for logging
+elk_port = os.getenv('ELK_PORT')  # ELK Port
+elk_user = os.getenv('ELK_USER')  # ELK User
+elk_pass = os.getenv('ELK_PASS')  # ELK Password
+elk_flush_freq = os.getenv('ELK_FLUSH_FREQ', default=2)  # Interval between flushes. Defaults to 2 seconds.
+elk_tls_verify = os.getenv('ELK_TLS_VERIFY', default="True")  # Allows disabling TLS verification for ELK. Default to True
+elk_index = os.getenv('ELK_INDEX', default="raponchi-log")  # ELK Index where logs will be logged
+
+# Disable TLS exceptions, will warn manually later
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+
+# ## Initialize logging -> THIS CONNECTS BUT DOESN'T SEND LOGS
+logger = logging.getLogger('raponchi')
+logger.setLevel(loglevel)
+
+# # Create Handlers
+# Create formatter for console handler
+formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+# Add Console Handler
+consoleHandler = logging.StreamHandler()
+logger.addHandler(consoleHandler)
+consoleHandler.setFormatter(formatter)
+consoleHandler.setLevel(loglevel)
+# Add ElasticSearch Handler if variables defined
+if elk_url and elk_port:
+    elk_host = "%s:%s" % (elk_url, elk_port)
+    elasticHandler = OpenSearchHandler(
+        index_name=elk_index,
+        hosts=[elk_host],
+        http_auth=(elk_user, elk_pass),
+        http_compress=True,
+        index_rotate="WEEKLY",
+        use_ssl=True,
+        verify_certs=eval(elk_tls_verify),
+        ssl_assert_hostname=eval(elk_tls_verify),
+        ssl_show_warn=False
+    )
+    logger.addHandler(elasticHandler)
+    elasticHandler.setLevel(loglevel)
+    logger.info("Logging to ElasticSearch enabled - URL: %s, User: %s" % (elk_host, elk_user))
+    if eval(elk_tls_verify) is False:
+        logger.warning("ElasticSearch TLS Verification disabled. Please note this is insecure.")
+
+# Inform loglevel in all handlers
+logger.info("Loglevel is %s", loglevel)
 
 
 # Components functions
+
 
 def frog_imager(keywords, operation_id):
     # Frog Imager scrapes Bing in search of a list of frog images, 
