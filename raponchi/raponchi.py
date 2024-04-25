@@ -28,7 +28,7 @@ timezone = os.getenv('TIMEZONE', default=get_localzone())  # Timezone
 loglevel = os.getenv('LOGLEVEL', default="INFO")  # Default log level
 
 # Frog generation parameters
-frogword = os.getenv('FROGWORD', default='rana')  # Keyword to search, defaults to "rana"
+frogword = os.getenv('FROGWORD', default='rana').replace(" ", "-")  # Keyword to search, defaults to "rana"
 path_to_frogs = os.getenv('PATH_TO_FROGS', default="dataset")  # Temporary path where frog images will be stored
 frog_number = os.getenv('FROG_NUMBER', default=5)  # Number of frog images downloaded in each batch
 frog_scheduler_interval = os.getenv('FROG_SCHEDULER_INTERVAL', default=30)  # How frequently the scheduler will run
@@ -56,7 +56,7 @@ elk_index = os.getenv('ELK_INDEX', default="raponchi-log")  # ELK Index where lo
 # Disable TLS exceptions, will warn manually later
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
-# ## Initialize logging -> THIS CONNECTS BUT DOESN'T SEND LOGS
+# ## Initialize logging
 logger = logging.getLogger('raponchi')
 logger.setLevel(loglevel)
 
