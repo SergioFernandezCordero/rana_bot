@@ -103,7 +103,7 @@ def frog_imager(keywords, operation_id):
         print("################### BEGIN BING SEARCH OUTPUT ###################")
         downloader.download(
             keywords,
-            limit=frog_number,
+            limit=int(frog_number),
             filter='photo',
             output_dir=path_to_frogs,
             adult_filter_off=False,
@@ -144,7 +144,6 @@ def frog_creator(frog_images_list, frog_names_list, operation_id):
     logger.info("%s - Get random photo for our frog" % operation_id)
     # Randomly select one image from downloaded ones
     global frog_photo
-    print(frog_images_list)
     frog_photo = random.choice(frog_images_list).rstrip()
     # Randomly select two names
     logger.info("%s - Get two random names from the list and generate a new name for our frog" % operation_id)
@@ -231,8 +230,7 @@ def frog_scheduler():
     while True:
         scheduled_jobs = schedule.idle_seconds()
         logger.info("SCHEDULER - Next job set to run on %s seconds." % str(round(scheduled_jobs)))
-        #schedule.run_pending()
-        schedule.run_all()
+        schedule.run_pending()
         time.sleep(int(frog_scheduler_interval))
 
 
