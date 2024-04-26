@@ -103,7 +103,7 @@ def frog_imager(keywords, operation_id):
         print("################### BEGIN BING SEARCH OUTPUT ###################")
         downloader.download(
             keywords,
-            limit=frog_number,
+            limit=int(frog_number),
             filter='photo',
             output_dir=path_to_frogs,
             adult_filter_off=False,
