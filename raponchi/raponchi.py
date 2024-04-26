@@ -144,6 +144,7 @@ def frog_creator(frog_images_list, frog_names_list, operation_id):
     logger.info("%s - Get random photo for our frog" % operation_id)
     # Randomly select one image from downloaded ones
     global frog_photo
+    print(frog_images_list)
     frog_photo = random.choice(frog_images_list).rstrip()
     # Randomly select two names
     logger.info("%s - Get two random names from the list and generate a new name for our frog" % operation_id)
@@ -230,7 +231,8 @@ def frog_scheduler():
     while True:
         scheduled_jobs = schedule.idle_seconds()
         logger.info("SCHEDULER - Next job set to run on %s seconds." % str(round(scheduled_jobs)))
-        schedule.run_pending()
+        #schedule.run_pending()
+        schedule.run_all()
         time.sleep(int(frog_scheduler_interval))
 
 
