@@ -18,6 +18,7 @@ import urllib.request
 import glob
 import tweepy
 import urllib3
+import argparse
 from opensearch_logger import OpenSearchHandler
 
 from tzlocal import get_localzone
@@ -52,6 +53,14 @@ elk_pass = os.getenv('ELK_PASS')  # ELK Password
 elk_flush_freq = os.getenv('ELK_FLUSH_FREQ', default=2)  # Interval between flushes. Defaults to 2 seconds.
 elk_tls_verify = os.getenv('ELK_TLS_VERIFY', default="True")  # Allows disabling TLS verification for ELK. Default to True
 elk_index = os.getenv('ELK_INDEX', default="raponchi-log")  # ELK Index where logs will be logged
+
+# Input parameters
+parser = argparse.ArgumentParser(description='Post futile and absurd info about frogs in Twitter')
+parser.add_argument("--now",
+                    action='store_true',
+                    help='Runs all scheduled jobs now, without waiting to its execution time')
+args = parser.parse_args()
+run_now = args.now
 
 # Disable TLS exceptions, will warn manually later
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
@@ -230,7 +239,11 @@ def frog_scheduler():
     while True:
         scheduled_jobs = schedule.idle_seconds()
         logger.info("SCHEDULER - Next job set to run on %s seconds." % str(round(scheduled_jobs)))
-        schedule.run_pending()
+        # If --run is set, run all scheduled jobs on start, without waiting of its schedule. Useful for development.
+        if run_now:
+            schedule.run_all(delay_seconds=5)
+        else:
+            schedule.run_pending()
         time.sleep(int(frog_scheduler_interval))
 
 
