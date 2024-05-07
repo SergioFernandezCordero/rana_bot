@@ -195,9 +195,9 @@ def frog_poster(operation_id, frog_full_name, frog_photo):
         media = api.media_upload(filename=frog_photo)
         logger.info("%s - Posting tweet" % operation_id)
         tweet = client.create_tweet(text=frog_full_name, media_ids=[media.media_id_string])
-        print(tweet)
+        logger.debug(tweet)
     except Exception as e:
-        logging.exception("%s - Got exception posting to Twitter: %s" % (operation_id, e))
+        logger.exception("%s - Got exception posting to Twitter: %s" % (operation_id, e))
 
 
 # Auxiliary functions

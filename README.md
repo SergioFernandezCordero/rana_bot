@@ -33,16 +33,24 @@ You can send logs to ElasticSearch. Assumed TLS and Credentials is active, but T
 - ELK_TLS_VERIFY: Allows disabling TLS verification for ELK. Default to True
 - ELK_INDEX: Name of the index used to store logs. Defaults to raponchi-log
 
+#### Input parameters
+
+```--now```: Runs all scheduled jobs now, without waiting to its execution time. Useful for development.
+
 ### Install dependencies:
 
 ```
 pip install -r requirements.txt
 ```
 
-### An run:
+### And run:
 
 ```
 python raponchi.py
+```
+or
+```
+python raponchi.py --now
 ```
 
 ### Further resources
