@@ -169,6 +169,7 @@ def frog_creator(frog_images_list, frog_names_list, operation_id):
 def frog_poster(operation_id, frog_full_name, frog_photo):
     # Frog Poster is the task that connects to Twitter and posts de tweet
     # using the content generated before.
+    logger.info("%s - Posting to Twitter" % operation_id)
     try:
         # This seems a little messy due to limitations on API endpoint when using a "Free" project.
         # These limitations force us to use bot V1 and V2 endpoints.
