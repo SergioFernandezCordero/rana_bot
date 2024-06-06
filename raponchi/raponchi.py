@@ -111,13 +111,9 @@ def prometheus_server(port):
     try:
         # Startup server
         start_http_server(int(port))
-        logger.info('Prometheus-exporter up at port ' + str(port))
-        # Metrics
-        raponchi_total_frogs = Counter('raponchi_total_frogs', 'Total frogs launched')
-        raponchi_success_frogs = Counter('raponchi_success_frogs', 'Successfully published frogs')
-        raponchi_error_frogs = Counter('raponchi_error_frogs', 'Unpublished frogs due to error')
+        logger.info('raponchi-exporter up at port ' + str(port))
     except Exception as e:
-        logging.exception("Unable to run prometheus-exporter at port %s: %s" % (port, e))
+        logging.exception("Unable to run raponchi-exporter at port %s: %s" % (port, e))
         pass
 
 
@@ -144,6 +140,7 @@ def frog_imager(keywords, operation_id):
         print("################### END BING SEARCH OUTPUT ###################")
     except Exception as e:
         logging.exception("%s - Got exception recovering images from Bing: %s" % (operation_id, e))
+        raponchi_error_frogs.inc(1)
     logger.info("%s - Creating a list of frog images files." % operation_id)
     frog_images_list = glob.glob(path_to_frogs + "/" + keywords + "/*", recursive=True)
     return frog_images_list
@@ -162,6 +159,7 @@ def frog_namer(frog_names_url, operation_id):
         urllib.request.urlretrieve(frog_names_url, path_to_frog_names_file)
     except Exception as e:
         logging.exception("%s - Got exception on main handler: %s" % (operation_id, e))
+        raponchi_error_frogs.inc(1)
     # Create a list with it and return it
     logger.info("%s - Generating names list and selecting two random ones." % operation_id)
     frog_names_list = open(path_to_frog_names_file).readlines()
@@ -215,9 +213,11 @@ def frog_poster(operation_id, frog_full_name, frog_photo):
         media = api.media_upload(filename=frog_photo)
         logger.info("%s - Posting tweet" % operation_id)
         tweet = client.create_tweet(text=frog_full_name, media_ids=[media.media_id_string])
+        raponchi_success_frogs.inc(1)
         print(tweet)
     except Exception as e:
         logging.exception("%s - Got exception posting to Twitter: %s" % (operation_id, e))
+        raponchi_error_frogs.inc(1)
 
 
 # Auxiliary functions
@@ -270,6 +270,7 @@ def frog_scheduler():
 def frog_generator():
     operation_id = "uuid: %s" % str(uuid.uuid4())
     logger.info("%s - Standard Frog Generator Job started for keyword: %s" % (operation_id, frogword))
+    raponchi_total_frogs.inc(1)
     frog_cleaner(path_to_frogs, operation_id)
     frog_creator(frog_imager(frogword, operation_id), frog_namer(frog_names_url, operation_id), operation_id)
     frog_poster(operation_id, frog_full_name, frog_photo)
@@ -284,4 +285,8 @@ if __name__ == '__main__':
                 )
     if prometheus_port:
         prometheus_server(prometheus_port)
+        # Metrics
+        raponchi_total_frogs = Counter('raponchi_total_frogs', 'Total frogs launched')
+        raponchi_success_frogs = Counter('raponchi_success_frogs', 'Successfully published frogs')
+        raponchi_error_frogs = Counter('raponchi_error_frogs', 'Unpublished frogs due to error')
     frog_scheduler()
