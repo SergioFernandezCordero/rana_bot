@@ -20,6 +20,7 @@ import tweepy
 import urllib3
 import argparse
 from opensearch_logger import OpenSearchHandler
+from prometheus_client import start_http_server, Counter, Histogram, Info
 
 from tzlocal import get_localzone
 from bing_image_downloader import downloader  # using Bing for more cringe
@@ -53,6 +54,9 @@ elk_pass = os.getenv('ELK_PASS')  # ELK Password
 elk_flush_freq = os.getenv('ELK_FLUSH_FREQ', default=2)  # Interval between flushes. Defaults to 2 seconds.
 elk_tls_verify = os.getenv('ELK_TLS_VERIFY', default="True")  # Allows disabling TLS verification for ELK. Default to True
 elk_index = os.getenv('ELK_INDEX', default="raponchi-log")  # ELK Index where logs will be logged
+
+# Prometheus
+prometheus_port = os.getenv('PROMETHEUS_PORT', default=10090)
 
 # Input parameters
 parser = argparse.ArgumentParser(description='Post futile and absurd info about frogs in Twitter')
@@ -101,6 +105,18 @@ if elk_url and elk_port:
 logger.info("Loglevel is %s", loglevel)
 
 
+# Prometheus - Instrumentation and metrics
+
+def prometheus_server(port):
+    try:
+        # Startup server
+        start_http_server(int(port))
+        logger.info('raponchi-exporter up at port ' + str(port))
+    except Exception as e:
+        logging.exception("Unable to run raponchi-exporter at port %s: %s" % (port, e))
+        pass
+
+
 # Components functions
 
 
@@ -110,6 +126,7 @@ def frog_imager(keywords, operation_id):
     logger.info(operation_id + " - Time to go for some Frogs images")
     try:
         print("################### BEGIN BING SEARCH OUTPUT ###################")
+        start = time.perf_counter()
         downloader.download(
             keywords,
             limit=int(frog_number),
@@ -121,9 +138,14 @@ def frog_imager(keywords, operation_id):
             timeout=5,
             verbose=False
         )
+        end = time.perf_counter()
+        bing_time = (end - start)
+        raponchi_bing_latency.observe(bing_time)
         print("################### END BING SEARCH OUTPUT ###################")
+        logger.debug('Spent %s s in Bing' % str(round(bing_time, 4)))
     except Exception as e:
         logging.exception("%s - Got exception recovering images from Bing: %s" % (operation_id, e))
+        raponchi_error_frogs.inc(1)
     logger.info("%s - Creating a list of frog images files." % operation_id)
     frog_images_list = glob.glob(path_to_frogs + "/" + keywords + "/*", recursive=True)
     return frog_images_list
@@ -142,6 +164,7 @@ def frog_namer(frog_names_url, operation_id):
         urllib.request.urlretrieve(frog_names_url, path_to_frog_names_file)
     except Exception as e:
         logging.exception("%s - Got exception on main handler: %s" % (operation_id, e))
+        raponchi_error_frogs.inc(1)
     # Create a list with it and return it
     logger.info("%s - Generating names list and selecting two random ones." % operation_id)
     frog_names_list = open(path_to_frog_names_file).readlines()
@@ -175,6 +198,7 @@ def frog_poster(operation_id, frog_full_name, frog_photo):
 
         # Using Twitter API v2
         logger.info("%s - Authenticating to Twitter" % operation_id)
+        start = time.perf_counter()
         # Auth for V1, for upload media
         auth = tweepy.OAuth1UserHandler(
             consumer_key=tw_consumer_key,
@@ -195,9 +219,15 @@ def frog_poster(operation_id, frog_full_name, frog_photo):
         media = api.media_upload(filename=frog_photo)
         logger.info("%s - Posting tweet" % operation_id)
         tweet = client.create_tweet(text=frog_full_name, media_ids=[media.media_id_string])
+        end = time.perf_counter()
+        twitter_time = (end - start)
+        raponchi_success_frogs.inc(1)
+        raponchi_twitter_latency.observe(twitter_time)
+        logger.debug('Spent %s s in Twitter' % str(round(twitter_time, 4)))
         print(tweet)
     except Exception as e:
         logging.exception("%s - Got exception posting to Twitter: %s" % (operation_id, e))
+        raponchi_error_frogs.inc(1)
 
 
 # Auxiliary functions
@@ -249,12 +279,17 @@ def frog_scheduler():
 
 def frog_generator():
     operation_id = "uuid: %s" % str(uuid.uuid4())
+    start = time.perf_counter()
     logger.info("%s - Standard Frog Generator Job started for keyword: %s" % (operation_id, frogword))
+    raponchi_total_frogs.inc(1)
     frog_cleaner(path_to_frogs, operation_id)
     frog_creator(frog_imager(frogword, operation_id), frog_namer(frog_names_url, operation_id), operation_id)
     frog_poster(operation_id, frog_full_name, frog_photo)
     frog_cleaner(path_to_frogs, operation_id)
-    logger.info("%s - Standard Frog Generator finished." % operation_id)
+    end = time.perf_counter()
+    total_time = end - start
+    raponchi_latency.observe(total_time)
+    logger.info(f"%s - Standard Frog Generator finished in %s seconds." % (operation_id, str(round(total_time, 4))))
 
 
 if __name__ == '__main__':
@@ -262,4 +297,22 @@ if __name__ == '__main__':
     logger.info("RAPONCHI starting on timezone %s. Please note all dates in logs will appear in this timezone." % (
         str(timezone))
                 )
+    if prometheus_port:
+        prometheus_server(prometheus_port)
+        # Metrics
+        raponchi_total_frogs = Counter('raponchi_total_frogs', 'Total frogs launched')
+        raponchi_success_frogs = Counter('raponchi_success_frogs', 'Successfully published frogs')
+        raponchi_error_frogs = Counter('raponchi_error_frogs', 'Unpublished frogs due to error')
+        raponchi_latency = Histogram(
+            'raponchi_latency',
+            'Total time spent from invocation of scheduler until frog publishing'
+        )
+        raponchi_bing_latency = Histogram(
+            'raponchi_bing_latency',
+            'Time spent searching and downloading from Bing'
+        )
+        raponchi_twitter_latency = Histogram(
+            'raponchi_twitter_latency',
+            'Time spent publishing frog on Twitter'
+        )
     frog_scheduler()
