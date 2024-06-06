@@ -269,13 +269,17 @@ def frog_scheduler():
 
 def frog_generator():
     operation_id = "uuid: %s" % str(uuid.uuid4())
+    start = time.perf_counter()
     logger.info("%s - Standard Frog Generator Job started for keyword: %s" % (operation_id, frogword))
     raponchi_total_frogs.inc(1)
     frog_cleaner(path_to_frogs, operation_id)
     frog_creator(frog_imager(frogword, operation_id), frog_namer(frog_names_url, operation_id), operation_id)
     frog_poster(operation_id, frog_full_name, frog_photo)
     frog_cleaner(path_to_frogs, operation_id)
-    logger.info("%s - Standard Frog Generator finished." % operation_id)
+    end = time.perf_counter()
+    total_time = end - start
+    raponchi_latency.observe(total_time)
+    logger.info(f"%s - Standard Frog Generator finished in %s seconds." % (operation_id, str(round(total_time, 4))))
 
 
 if __name__ == '__main__':
@@ -289,4 +293,9 @@ if __name__ == '__main__':
         raponchi_total_frogs = Counter('raponchi_total_frogs', 'Total frogs launched')
         raponchi_success_frogs = Counter('raponchi_success_frogs', 'Successfully published frogs')
         raponchi_error_frogs = Counter('raponchi_error_frogs', 'Unpublished frogs due to error')
+        raponchi_latency = Histogram(
+            'raponchi_latency',
+            'Time spent from invocation of scheduler until frog publishing'
+        )
+
     frog_scheduler()
