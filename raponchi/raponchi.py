@@ -126,6 +126,7 @@ def frog_imager(keywords, operation_id):
     logger.info(operation_id + " - Time to go for some Frogs images")
     try:
         print("################### BEGIN BING SEARCH OUTPUT ###################")
+        start = time.perf_counter()
         downloader.download(
             keywords,
             limit=int(frog_number),
@@ -137,7 +138,11 @@ def frog_imager(keywords, operation_id):
             timeout=5,
             verbose=False
         )
+        end = time.perf_counter()
+        bing_time = (end - start)
+        raponchi_bing_latency.observe(bing_time)
         print("################### END BING SEARCH OUTPUT ###################")
+        logger.debug('Spent %s s in Bing' % str(round(bing_time, 4)))
     except Exception as e:
         logging.exception("%s - Got exception recovering images from Bing: %s" % (operation_id, e))
         raponchi_error_frogs.inc(1)
@@ -193,6 +198,7 @@ def frog_poster(operation_id, frog_full_name, frog_photo):
 
         # Using Twitter API v2
         logger.info("%s - Authenticating to Twitter" % operation_id)
+        start = time.perf_counter()
         # Auth for V1, for upload media
         auth = tweepy.OAuth1UserHandler(
             consumer_key=tw_consumer_key,
@@ -213,7 +219,11 @@ def frog_poster(operation_id, frog_full_name, frog_photo):
         media = api.media_upload(filename=frog_photo)
         logger.info("%s - Posting tweet" % operation_id)
         tweet = client.create_tweet(text=frog_full_name, media_ids=[media.media_id_string])
+        end = time.perf_counter()
+        twitter_time = (end - start)
         raponchi_success_frogs.inc(1)
+        raponchi_twitter_latency.observe(twitter_time)
+        logger.debug('Spent %s s in Twitter' % str(round(twitter_time, 4)))
         print(tweet)
     except Exception as e:
         logging.exception("%s - Got exception posting to Twitter: %s" % (operation_id, e))
@@ -295,7 +305,14 @@ if __name__ == '__main__':
         raponchi_error_frogs = Counter('raponchi_error_frogs', 'Unpublished frogs due to error')
         raponchi_latency = Histogram(
             'raponchi_latency',
-            'Time spent from invocation of scheduler until frog publishing'
+            'Total time spent from invocation of scheduler until frog publishing'
         )
-
+        raponchi_bing_latency = Histogram(
+            'raponchi_bing_latency',
+            'Time spent searching and downloading from Bing'
+        )
+        raponchi_twitter_latency = Histogram(
+            'raponchi_twitter_latency',
+            'Time spent publishing frog on Twitter'
+        )
     frog_scheduler()
