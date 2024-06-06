@@ -9,3 +9,4 @@ tz
 tzlocal
 opensearch-logger
 elasticsearch==7.17.9
+prometheus_client
