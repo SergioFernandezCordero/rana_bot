@@ -20,6 +20,7 @@ import tweepy
 import urllib3
 import argparse
 from opensearch_logger import OpenSearchHandler
+from prometheus_client import start_http_server, Counter, Histogram, Info
 
 from tzlocal import get_localzone
 from bing_image_downloader import downloader  # using Bing for more cringe
@@ -53,6 +54,9 @@ elk_pass = os.getenv('ELK_PASS')  # ELK Password
 elk_flush_freq = os.getenv('ELK_FLUSH_FREQ', default=2)  # Interval between flushes. Defaults to 2 seconds.
 elk_tls_verify = os.getenv('ELK_TLS_VERIFY', default="True")  # Allows disabling TLS verification for ELK. Default to True
 elk_index = os.getenv('ELK_INDEX', default="raponchi-log")  # ELK Index where logs will be logged
+
+# Prometheus
+prometheus_port = os.getenv('PROMETHEUS_PORT', default=10090)
 
 # Input parameters
 parser = argparse.ArgumentParser(description='Post futile and absurd info about frogs in Twitter')
@@ -99,6 +103,22 @@ if elk_url and elk_port:
 
 # Inform loglevel in all handlers
 logger.info("Loglevel is %s", loglevel)
+
+
+# Prometheus - Instrumentation and metrics
+
+def prometheus_server(port):
+    try:
+        # Startup server
+        start_http_server(int(port))
+        logger.info('Prometheus-exporter up at port ' + str(port))
+        # Metrics
+        raponchi_total_frogs = Counter('raponchi_total_frogs', 'Total frogs launched')
+        raponchi_success_frogs = Counter('raponchi_success_frogs', 'Successfully published frogs')
+        raponchi_error_frogs = Counter('raponchi_error_frogs', 'Unpublished frogs due to error')
+    except Exception as e:
+        logging.exception("Unable to run prometheus-exporter at port %s: %s" % (port, e))
+        pass
 
 
 # Components functions
@@ -262,4 +282,6 @@ if __name__ == '__main__':
     logger.info("RAPONCHI starting on timezone %s. Please note all dates in logs will appear in this timezone." % (
         str(timezone))
                 )
+    if prometheus_port:
+        prometheus_server(prometheus_port)
     frog_scheduler()
