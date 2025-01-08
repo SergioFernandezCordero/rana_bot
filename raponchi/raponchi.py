@@ -236,14 +236,19 @@ def frog_poster(operation_id, frog_full_name, frog_photo):
 def frog_cleaner(path_to_frogs, operation_id):
     # Frog Cleaner is an auxiliary function which cleanups the images downloaded by Frog Imager
     # I do this because I'm to lazy to patch others code, specially when it looks abandoned.
-    logger.info("%s - Will try cleanup path_to_frogs folder and its contents" % operation_id)
+    logger.info("%s - Will try cleanup path_to_frogs folder contents" % operation_id)
     logger.info("%s - Cleanup %s" % (operation_id, path_to_frogs))
     if os.path.exists(path_to_frogs) and os.path.isdir(path_to_frogs):
-        try:
-            shutil.rmtree(path_to_frogs)
-            logger.info("%s - Directory %s is deleted" % (operation_id, path_to_frogs))
-        except OSError as x:
-            logger.error("%s - Error occurred: %s : %s" % (operation_id, path_to_frogs, x.strerror))
+        for filename in os.listdir(path_to_frogs):
+            file_path = os.path.join(path_to_frogs, filename)
+            try:
+                if os.path.isfile(file_path) or os.path.islink(file_path):
+                    os.unlink(file_path)
+                elif os.path.isdir(file_path):
+                    shutil.rmtree(file_path)
+                logger.info("%s - Directory %s content is deleted" % (operation_id, path_to_frogs))
+            except OSError as x:
+                logger.error("%s - Error occurred: %s : %s" % (operation_id, path_to_frogs, x.strerror))
     else:
         logger.warning("%s - Directory %s doesn't exists or is not a directory" % (operation_id, path_to_frogs))
 
