@@ -278,7 +278,8 @@ def frog_scheduler():
         if run_now:
             schedule.run_all(delay_seconds=5)
         else:
-            schedule.run_pending()
+            #schedule.run_pending()
+            schedule.run_all()
         time.sleep(int(frog_scheduler_interval))
 
 
